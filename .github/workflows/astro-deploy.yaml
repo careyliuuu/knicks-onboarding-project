@@ -20,6 +20,4 @@ jobs:
         uses: astronomer/deploy-action@v0.4
         with:
           deployment-id: ${{ secrets.ASTRO_DEPLOYMENT_ID }}
-          action: deploygit add .github/workflows/astro-deploy.yaml
-git commit -m "Add GitHub Action for auto-deploy"
-git push
+          action: deploy
