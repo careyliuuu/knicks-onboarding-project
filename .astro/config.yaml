@@ -1,0 +1,8 @@
+project:
+  name: knicks-prediction-project
+postgres:
+  port: 5433
+webserver:
+  port: 8082       # force UI to this port
+api-server:
+  port: 8083       # force api to 8083 port to fix container issues
