@@ -1,0 +1,25 @@
+name: Deploy to Astro
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      ## These utilize the secrets you just set in GitHub Settings
+      ASTRO_API_TOKEN: ${{ secrets.ASTRO_API_TOKEN }}
+      ASTRO_DEPLOYMENT_ID: ${{ secrets.ASTRO_DEPLOYMENT_ID }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Astro
+        uses: astronomer/deploy-action@v0.4
+        with:
+          deployment-id: ${{ secrets.ASTRO_DEPLOYMENT_ID }}
+          action: deploygit add .github/workflows/astro-deploy.yaml
+git commit -m "Add GitHub Action for auto-deploy"
+git push
