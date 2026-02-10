@@ -1,45 +1,81 @@
-Overview
-========
+# 🏀 Knicks Enterprise AI Pipeline
 
-Welcome to Astronomer! This project was generated after you ran 'astro dev init' using the Astronomer CLI. This readme describes the contents of the project, as well as how to run Apache Airflow on your local machine.
+> **An Event-Driven, Human-in-the-Loop GenAI Pipeline built on Apache Airflow & Astronomer.**
 
-Project Contents
-================
+This project is an enterprise-grade data pipeline that predicts the outcome of New York Knicks games using **Llama 3 (8B)** via the **Groq API**. It demonstrates modern data engineering practices including Event-Driven Architecture (Airflow Assets), Human-in-the-Loop validation, and automated CI/CD.
 
-Your Astro project contains the following files and folders:
+---
 
-- dags: This folder contains the Python files for your Airflow DAGs. By default, this directory includes one example DAG:
-    - `example_astronauts`: This DAG shows a simple ETL pipeline example that queries the list of astronauts currently in space from the Open Notify API and prints a statement for each astronaut. The DAG uses the TaskFlow API to define tasks in Python, and dynamic task mapping to dynamically print a statement for each astronaut. For more on how this DAG works, see our [Getting started tutorial](https://www.astronomer.io/docs/learn/get-started-with-airflow).
-- Dockerfile: This file contains a versioned Astro Runtime Docker image that provides a differentiated Airflow experience. If you want to execute other commands or overrides at runtime, specify them here.
-- include: This folder contains any additional files that you want to include as part of your project. It is empty by default.
-- packages.txt: Install OS-level packages needed for your project by adding them to this file. It is empty by default.
-- requirements.txt: Install Python packages needed for your project by adding them to this file. It is empty by default.
-- plugins: Add custom or community plugins for your project to this file. It is empty by default.
-- airflow_settings.yaml: Use this local-only file to specify Airflow Connections, Variables, and Pools instead of entering them in the Airflow UI as you develop DAGs in this project.
+## 🏗️ Architecture Overview
 
-Deploy Your Project Locally
-===========================
+The pipeline consists of two decoupled DAGs connected by an **Airflow Asset** (`redshift://knicks_predictions`).
 
-Start Airflow on your local machine by running 'astro dev start'.
+### 1. Producer DAG: `knicks_enterprise_pipeline`
+* **Ingest:** Loads raw game data from CSV (Kaggle dataset).
+* **Transform:** Processes team stats using Python (Pandas).
+* **AI Inference:** Sends game context (Opponent, Date, Recent Stats) to **Groq/Llama 3** to generate a prediction.
+* **Human-in-the-Loop:** Pauses execution for manual approval via the Airflow UI (`approve_analysis` task).
+* **Load:** Writes the approved prediction to **Amazon Redshift**.
+* **Trigger:** Updates the `redshift://knicks_predictions` asset.
 
-This command will spin up five Docker containers on your machine, each for a different Airflow component:
+### 2. Consumer DAG: `knicks_analytics_dashboard`
+* **Trigger:** Automatically starts when the upstream asset is updated.
+* **Action:** Simulates refreshing a downstream analytics dashboard or sending notifications based on the new data.
 
-- Postgres: Airflow's Metadata Database
-- Scheduler: The Airflow component responsible for monitoring and triggering tasks
-- DAG Processor: The Airflow component responsible for parsing DAGs
-- API Server: The Airflow component responsible for serving the Airflow UI and API
-- Triggerer: The Airflow component responsible for triggering deferred tasks
+---
 
-When all five containers are ready the command will open the browser to the Airflow UI at http://localhost:8080/. You should also be able to access your Postgres Database at 'localhost:5432/postgres' with username 'postgres' and password 'postgres'.
+## 🚀 Key Features
 
-Note: If you already have either of the above ports allocated, you can either [stop your existing Docker containers or change the port](https://www.astronomer.io/docs/astro/cli/troubleshoot-locally#ports-are-not-available-for-my-local-airflow-webserver).
+* **GenAI Integration:** Uses the [Airflow AI SDK](https://github.com/astronomer/airflow-ai-sdk) to interface with Groq's Llama 3 model for high-speed inference.
+* **Event-Driven Scheduling:** Decouples the prediction logic from the dashboard logic using Airflow Datasets/Assets.
+* **Human Validation:** Implements a "Stop & Review" step to prevent AI hallucinations from reaching production tables.
+* **Data Warehouse:** Persists structured predictions into **Amazon Redshift** with idempotent storage logic (`CASCADE` drops).
+* **Observability:** Full lineage tracking via **Astro Observe** (OpenLineage) with a defined Data Product.
+* **CI/CD:** Automated deployments to Astronomer via **GitHub Actions** on push to `main`.
 
-Deploy Your Project to Astronomer
-=================================
+---
 
-If you have an Astronomer account, pushing code to a Deployment on Astronomer is simple. For deploying instructions, refer to Astronomer documentation: https://www.astronomer.io/docs/astro/deploy-code/
+## 📂 Project Structure
 
-Contact
-=======
+* **`dags/`**: Contains Python files for Airflow DAGs.
+    * `knicks_prediction_flow.py`: Main Pipeline (Producer)
+    * `downstream_analytics.py`: Dashboard Trigger (Consumer)
+    * `assets.py`: Shared Asset Definitions
+* **`include/`**: Raw data sources (e.g., `knicks_data.csv`).
+* **`.github/workflows/`**: CI/CD Configuration (`astro-deploy.yaml`).
+* **`Dockerfile`**: Astro Runtime Environment.
+* **`requirements.txt`**: Python Dependencies.
 
-The Astronomer CLI is maintained with love by the Astronomer team. To report a bug or suggest a change, reach out to our support.
+---
+
+## 🛠️ Setup & Deployment
+
+### Local Development
+1. **Install Astro CLI:** `brew install astro`
+2. **Start Airflow:** `astro dev start`
+3. **Access UI:** Open `localhost:8080` (User: `admin`, Pass: `admin`)
+
+### Cloud Deployment (CI/CD)
+This project is configured with **GitHub Actions**.
+1. Push changes to the `main` branch.
+2. The workflow automatically builds and deploys to the **Astronomer Cloud**.
+3. Monitor the deployment in the **Astro Dashboard**.
+
+---
+
+## 📊 Data Lineage
+
+This project uses **OpenLineage** to track data movement.
+
+* **Producer:** `knicks_enterprise_pipeline`
+* **Asset:** `redshift://knicks_predictions`
+* **Consumer:** `knicks_analytics_dashboard`
+
+View the full lineage graph in the **Astro Observe** tab.
+
+---
+
+## 📞 Contact
+
+* **Maintainer:** Carey Liu
+* **Platform:** Astronomer / Apache Airflow
