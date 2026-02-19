@@ -1,3 +1,7 @@
 pandas
 apache-airflow-providers-amazon
 airflow-ai-sdk[groq]
+git+https://github.com/astronomer/blueprint.git
+tabulate
+apache-airflow-providers-common-sql
+openai

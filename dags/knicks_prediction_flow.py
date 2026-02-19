@@ -53,7 +53,7 @@ def knicks_enterprise_pipeline():
         # Load Data
         df_games = pd.read_csv(games_path, low_memory=False)
         
-        # KNICKS ID
+        # KNICKS ID in dataset
         KNICKS_ID = 1610612752
         
         # Filter for Knicks games
@@ -65,7 +65,7 @@ def knicks_enterprise_pipeline():
         if knicks_games.empty:
             raise ValueError("No Knicks games found! Check the CSV file.")
 
-        # Get the most recent game
+        # Get most recent game
         last_game = knicks_games.iloc[0]
         game_date = last_game['gameDateTimeEst']
         
@@ -84,22 +84,30 @@ def knicks_enterprise_pipeline():
             
         return {
             "date": str(game_date),
-            "opponent": str(opp_name),  # <--- Now guarantees "Thunder" for recent games
+            "opponent": str(opp_name), 
             "result": f"Knicks scored {points} vs {opp_name} {opp_points}",
             "location": "Home" if is_home else "Away"
         }
     
-    # 3. TRANSFORM: AI SDK Analysis
+    # 3. TRANSFORM: AI SDK Analysis with Groq model
     @task.llm(
         model="groq:llama-3.3-70b-versatile", 
-        system_prompt="You are a data-driven NBA analyst. Analyze the provided game stats."
+        system_prompt="You are a decisive, bold, and data-driven NBA analyst. You do not hedge or overcomplicate your analysis. You call it exactly how you see it."
     )
     def analyze_game_performance(game_context: dict):
         return f"""
         Analyze this game context: {game_context}.
-        1. Was this a good defensive performance?
-        2. Based on this, would you bet on them next game?
-        Keep it under 3 sentences.
+       
+         Rules for your analysis:
+        - In the modern NBA, holding a team under 100 points is an absolutely elite defensive performance.
+        - Scoring over 120 points is a fantastic offensive performance.
+        - Winning by 20+ points is a dominant blowout. Do not question the defense in a blowout win.
+
+        1. Was this a good offensive performance?
+        2. Was this a good defensive performance?
+        3. Based on this, would you bet on them next game?
+        
+        Give a highly confident, direct answer. Keep it under 5 sentences.
         """
 
     # 4. HITL
@@ -107,7 +115,8 @@ def knicks_enterprise_pipeline():
         task_id="approve_analysis",
         subject="Approve AI Prediction",
         body="AI Analysis: {{ task_instance.xcom_pull(task_ids='analyze_game_performance') }}",
-        defaults=["Approve"], 
+        defaults=["Approve"],
+        fail_on_reject=True 
     )
 
     # 5. LOAD: Save to Redshift
@@ -120,7 +129,7 @@ def knicks_enterprise_pipeline():
             INSERT INTO knicks_predictions (game_date, opponent, recent_stats, ai_prediction)
             VALUES (%s, %s, %s, %s);
         """,
-        # 2. Pass values as a LIST
+        # 2. Pass values as a List
         parameters=[
             '{{ task_instance.xcom_pull(task_ids="get_latest_game_context")["date"] }}',
             '{{ task_instance.xcom_pull(task_ids="get_latest_game_context")["opponent"] }}',
