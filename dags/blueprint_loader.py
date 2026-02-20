@@ -1,3 +1,4 @@
+from airflow import DAG  # Required to trigger Airflow's DAG discovery heuristic!
 import os
 import yaml
 import sys
