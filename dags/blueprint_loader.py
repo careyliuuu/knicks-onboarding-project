@@ -5,7 +5,7 @@ from glob import glob
 
 # Add templates to path
 sys.path.append("/usr/local/airflow/dags/blueprints/templates")
-from nba_prediction import NBAPredictionBlueprint
+from blueprints.templates.nba_prediction import NBAPredictionBlueprint
 
 CONFIGS_DIR = "/usr/local/airflow/dags/blueprints/instances"
 
