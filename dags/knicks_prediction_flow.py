@@ -116,7 +116,7 @@ def knicks_enterprise_pipeline():
         subject="Approve AI Prediction",
         body="AI Analysis: {{ task_instance.xcom_pull(task_ids='analyze_game_performance') }}",
         defaults=["Approve"],
-        fail_on_reject=True 
+        fail_on_reject=True # this was added to Fail entire dag upon HITL denial
     )
 
     # 5. LOAD: Save to Redshift
