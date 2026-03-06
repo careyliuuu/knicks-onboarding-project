@@ -4,6 +4,7 @@ from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.standard.operators.hitl import ApprovalOperator
 from airflow.sdk import Asset
+from airflow.datasets import Asset  # or from airflow import Dataset
 from datetime import datetime
 import pandas as pd
 import json
@@ -132,7 +133,7 @@ class NBAPredictionBlueprint(Blueprint):
             save_to_db = SQLExecuteQueryOperator(
                 task_id="publish_to_redshift",
                 conn_id='redshift_default',
-                outlets=[team_asset],
+               outlets=[Asset(name="knicks_prediction", uri="redshift://knicks_predictions/")],
                 sql="""
                     INSERT INTO nba_predictions (team, game_date, opponent, prediction, confidence_score, reasoning)
                     VALUES (%s, %s, %s, %s, %s, %s);
