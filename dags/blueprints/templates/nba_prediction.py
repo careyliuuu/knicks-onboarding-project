@@ -4,6 +4,7 @@ from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.standard.operators.hitl import ApprovalOperator
 from airflow.sdk import Asset
+from airflow.assets import Asset
 from datetime import datetime
 import pandas as pd
 import json
